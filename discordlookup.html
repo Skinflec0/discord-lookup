@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Ultimate Lookup</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+    :root {
+      --bg: #313338;
+      --card: #232428;
+      --input: #1e1f22;
+      --hover: #2b2d31;
+      --blurple: #5865F2;
+      --blurple-dark: #4752c4;
+      --green: #57F287;
+      --red: #ED4245;
+      --text: #f2f3f5;
+      --muted: #b5bac1;
+      --dim: #80848e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background-color: var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px 16px 60px;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+    .discord-lookup-widget {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 640px;
+      max-width: 100%;
+    }
+    .tabs {
+      display: flex;
+      gap: 6px;
+      background: var(--input);
+      padding: 5px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      flex: 1;
+      min-width: 90px;
+      padding: 10px 8px;
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      border-radius: 7px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+    .tab-btn.active { background: var(--blurple); color: #fff; }
+    .tab-btn:hover:not(.active) { background: var(--hover); color: var(--text); }
+    .search-box { display: flex; gap: 8px; }
+    .search-box input {
+      flex: 1;
+      background: var(--input);
+      border: 1px solid transparent;
+      color: var(--text);
+      padding: 13px 15px;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-box input:focus { border-color: var(--blurple); background: #111214; }
+    .search-box button {
+      background: var(--blurple);
+      color: white;
+      border: none;
+      padding: 13px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .search-box button:hover:not(:disabled) { background: var(--blurple-dark); }
+    .search-box button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .history-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 28px;
+    }
+    .history-chip {
+      background: var(--input);
+      color: var(--muted);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid #2b2d31;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .history-chip:hover { background: var(--hover); color: #fff; border-color: var(--blurple); }
+    .history-clear {
+      background: transparent;
+      border: 1px solid #40444b;
+      color: var(--dim);
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .discord-profile {
+      background-color: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+      color: var(--text);
+      overflow: hidden;
+      animation: fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .discord-banner {
+      height: 120px;
+      width: 100%;
+      background-color: #5c5eb0;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+    }
+    .discord-header-simple {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      padding: 56px 22px 14px 22px;
+    }
+    .discord-avatar-container {
+      position: absolute;
+      top: -46px;
+      left: 18px;
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      background-color: var(--card);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .discord-avatar-simple {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background-color: var(--hover);
+      object-fit: cover;
+    }
+    .discord-decoration {
+      position: absolute;
+      top: 0; left: 0;
+      width: 92px; height: 92px;
+      pointer-events: none;
+    }
+    .discord-name-block { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
+    .name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .discord-display-name { font-size: 23px; font-weight: 700; margin: 0; line-height: 1.2; }
+    .discord-username { font-size: 14px; font-weight: 500; margin: 0; color: var(--muted); }
+    .asset-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .badge-pill {
+      display: flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.02em;
+    }
+    .badge-green { background: rgba(87,242,135,0.15); color: var(--green); }
+    .badge-purple { background: rgba(235,69,158,0.15); color: #EB459E; }
+    .badge-blue { background: rgba(88,101,242,0.15); color: var(--blurple); }
+    .badge-yellow { background: rgba(254,231,92,0.15); color: #FEE75C; }
+    .badge-red { background: rgba(237,66,69,0.15); color: var(--red); }
+    .badge-orange { background: rgba(250,166,26,0.15); color: #FAA61A; }
+    .badge-cyan { background: rgba(0,188,212,0.15); color: #00BCD4; }
+    .discord-content { padding: 0 22px 22px 22px; }
+    .section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      color: var(--muted); margin: 20px 0 10px 0; letter-spacing: 0.06em;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .section-title:first-child { margin-top: 0; }
+    .discord-details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--input);
+      border-radius: 8px;
+      border: 1px solid var(--input);
+      overflow: hidden;
+    }
+    .grid-item {
+      background: #111214;
+      padding: 11px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .grid-item.full-width { grid-column: span 2; }
+    .detail-label { font-size: 11px; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .detail-value { font-size: 13.5px; color: #dbdee1; word-break: break-word; }
+    .detail-subtext { font-size: 11px; color: var(--dim); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+    .code-text { font-family: 'JetBrains Mono', monospace; color: #949ba4; font-size: 12.5px; }
+    .media-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .media-btn {
+      flex: 1; min-width: 110px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: var(--hover); color: #dbdee1; text-decoration: none;
+      padding: 9px; border-radius: 6px; font-size: 12.5px; font-weight: 600;
+      transition: background 0.15s; border: none; cursor: pointer;
+    }
+    .media-btn:hover { background: #383a40; color: #fff; }
+    .media-btn.disabled { opacity: 0.45; pointer-events: none; }
+    .full-banner-preview {
+      margin-top: 14px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #2b2d31;
+      display: none;
+    }
+    .full-banner-preview img { width: 100%; display: block; }
+    .copy-btn {
+      background: var(--hover); border: none; color: var(--muted);
+      padding: 1px 7px; border-radius: 4px; font-size: 10px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { background: #383a40; color: #fff; }
+    .copy-btn.copied { background: var(--green); color: #111; }
+    .snowflake-details {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-top: 6px;
+    }
+    .sf-item {
+      background: var(--input);
+      padding: 8px 6px;
+      border-radius: 6px;
+      text-align: center;
+    }
+    .sf-label { font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; }
+    .sf-value { font-size: 12px; color: #dbdee1; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+    .accent-swatch {
+      display: inline-block; width: 13px; height: 13px; border-radius: 3px;
+      vertical-align: middle; margin-right: 5px; border: 1px solid #40444b;
+    }
+    .spinner {
+      display: inline-block; width: 13px; height: 13px;
+      border: 2px solid #fff; border-top-color: transparent;
+      border-radius: 50%; animation: spin 0.65s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      background: var(--green); color: #111; padding: 10px 18px; border-radius: 8px;
+      font-weight: 600; font-size: 13px; z-index: 9999; opacity: 0;
+      transition: opacity 0.25s; pointer-events: none; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .toast.show { opacity: 1; }
+    .toast.error { background: var(--red); color: #fff; }
+    .json-panel {
+      margin-top: 14px;
+      background: #111214;
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 220px;
+      overflow: auto;
+      display: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #a0a8b0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .size-select {
+      background: var(--hover);
+      color: var(--text);
+      border: none;
+      border-radius: 5px;
+      padding: 4px 6px;
+      font-size: 12px;
+      margin-left: 8px;
+    }
+    .footer-note {
+      text-align: center;
+      font-size: 11px;
+      color: var(--dim);
+      margin-top: 8px;
+    }
+    .presence-box {
+      background: #111214;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      display: none;
+    }
+    .presence-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .status-online { background: #57F287; }
+    .status-idle { background: #FAA61A; }
+    .status-dnd { background: #ED4245; }
+    .status-offline { background: #747f8d; }
+    .activity-item {
+      font-size: 13px;
+      color: #dbdee1;
+      margin-top: 6px;
+      padding-left: 18px;
+      position: relative;
+    }
+    .activity-item::before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: var(--muted);
+    }
+    .spotify-card {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: #1a1b1e;
+      border-radius: 8px;
+      padding: 8px;
+      margin-top: 8px;
+    }
+    .spotify-card img {
+      width: 48px; height: 48px; border-radius: 4px;
+    }
+    .spotify-info { font-size: 12px; }
+    .spotify-info strong { display: block; color: #fff; }
+    .spotify-info span { color: var(--muted); }
+    @media (max-width: 520px) {
+      .discord-details-grid { grid-template-columns: 1fr; }
+      .grid-item.full-width { grid-column: span 1; }
+      .snowflake-details { grid-template-columns: 1fr 1fr; }
+      .tabs { gap: 4px; }
+      .tab-btn { font-size: 12px; padding: 9px 6px; }
+    }
+  </style>
+</head>
+<body>
+<div class="discord-lookup-widget">
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-user" onclick="switchTab('user')">User</button>
+    <button class="tab-btn" id="tab-server" onclick="switchTab('server')">Server</button>
+    <button class="tab-btn" id="tab-invite" onclick="switchTab('invite')">Invite</button>
+    <button class="tab-btn" id="tab-app" onclick="switchTab('app')">App / Bot</button>
+  </div>
+  <div class="search-box">
+    <input type="text" id="d-input" placeholder="Enter Discord User ID..." autocomplete="off" spellcheck="false">
+    <button id="d-button" onclick="performLookup()">Look Up</button>
+  </div>
+  <div class="history-bar" id="history-bar"></div>
+
+  <!-- USER CARD -->
+  <div class="discord-profile" id="user-card" style="display:none;">
+    <div class="discord-banner" id="u-banner"></div>
+    <div class="discord-header-simple">
+      <div class="discord-avatar-container">
+        <img class="discord-avatar-simple" id="u-avatar" src="" alt="Avatar">
+        <img class="discord-decoration" id="u-decoration" src="" style="display:none;">
+      </div>
+      <div class="discord-name-block">
+        <div class="name-row">
+          <h1 class="discord-display-name" id="u-global-name">Loading...</h1>
+          <span id="u-bot-tag" class="badge-pill badge-blue" style="display:none;">🤖 APP</span>
+        </div>
+        <h2 class="discord-username" id="u-username">@loading</h2>
+        <div class="asset-badges" id="u-badges"></div>
+      </div>
+    </div>
+    <div class="discord-content">
+      <div class="section-title">Live Presence (Lanyard)
+        <span style="font-size:10px;font-weight:500;text-transform:none;color:var(--dim);">optional · requires Lanyard server</span>
+      </div>
+      <div class="presence-box" id="u-presence">
+        <div class="presence-status" id="u-presence-status"></div>
+        <div id="u-activities"></div>
+        <div id="u-spotify"></div>
+      </div>
+
+      <div class="section-title">Developer &amp; Raw Data
+        <button class="copy-btn" onclick="exportJSON('user')">Export JSON</button>
+      </div>
+      <div class="discord-details-grid">
+        <div class="grid-item">
+          <div class="detail-label">User ID <button class="copy-btn" onclick="copyText(document.getElementById('u-val-id').textContent,this)">Copy</button></div>
+          <div class="detail-value code-text" id="u-val-id">...</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Discriminator</div>
+          <div class="detail-value code-text" id="u-val-discrim">...</div>
+        </div>
+        <div class="grid-item full-width">
+          <div class="detail-label">Account Created</div>
+          <div class="detail-value" id="u-val-created">...</div>
+          <div class="detail-subtext" id="u-val-created-raw">...</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Raw Flags</div>
+          <div class="detail-value code-text" id="u-val-flags-raw">0</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Premium Type</div>
+          <div class="detail-value" id="u-val-nitro">...</div>
+        </div>
+        <div class="grid-item full-width">
+          <div class="detail-label">Public Flags (Parsed)</div>
+          <div class="detail-value" id="u-val-flags">None</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Accent Color</div>
+          <div class="detail-value" id="u-val-accent">None</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Banner Color</div>
+          <div class="detail-value" id="u-val-banner-color">None</div>
+        </div>
+      </div>
+      <div class="section-title">Snowflake Breakdown</div>
+      <div class="snowflake-details" id="u-snowflake">
+        <div class="sf-item"><div class="sf-label">Timestamp</div><div class="sf-value" id="sf-ts">-</div></div>
+        <div class="sf-item"><div class="sf-label">Worker</div><div class="sf-value" id="sf-worker">-</div></div>
+        <div class="sf-item"><div class="sf-label">Process</div><div class="sf-value" id="sf-process">-</div></div>
+        <div class="sf-item"><div class="sf-label">Increment</div><div class="sf-value" id="sf-inc">-</div></div>
+        <div class="sf-item"><div class="sf-label">Unix ms</div><div class="sf-value" id="sf-unix">-</div></div>
+        <div class="sf-item"><div class="sf-label">Age (days)</div><div class="sf-value" id="sf-days">-</div></div>
+      </div>
+      <div class="section-title">Media &amp; Assets
+        <select class="size-select" id="avatar-size" onchange="updateAvatarSize()">
+          <option value="128">128px</option>
+          <option value="256">256px</option>
+          <option value="512">512px</option>
+          <option value="1024" selected>1024px</option>
+          <option value="2048">2048px</option>
+          <option value="4096">4096px</option>
+        </select>
+      </div>
+      <div class="media-actions">
+        <a href="#" id="btn-dl-avatar" class="media-btn disabled" target="_blank" download>⤓ Avatar</a>
+        <a href="#" id="btn-dl-banner" class="media-btn disabled" target="_blank" download>⤓ Banner</a>
+        <a href="#" id="btn-open-cdn" class="media-btn disabled" target="_blank">Open CDN</a>
+      </div>
+      <div class="full-banner-preview" id="u-full-banner-container">
+        <img id="u-full-banner-img" src="" alt="Full Banner Preview">
+      </div>
+      <div class="json-panel" id="u-json"></div>
+    </div>
+  </div>
+
+  <!-- SERVER CARD -->
+  <div class="discord-profile" id="server-card" style="display:none;">
+    <div class="discord-banner" id="s-banner"></div>
+    <div class="discord-header-simple">
+      <div class="discord-avatar-container" style="border-radius:16px;">
+        <img class="discord-avatar-simple" id="s-icon" src="" style="border-radius:16px;">
+      </div>
+      <div class="discord-name-block">
+        <h1 class="discord-display-name" id="s-name">Loading Server...</h1>
+        <div class="asset-badges" id="s-badges"></div>
+      </div>
+    </div>
+    <div class="discord-content">
+      <div class="section-title">Server Data
+        <button class="copy-btn" onclick="exportJSON('server')">Export JSON</button>
+      </div>
+      <div class="discord-details-grid">
+        <div class="grid-item">
+          <div class="detail-label">Guild ID <button class="copy-btn" onclick="copyText(document.getElementById('s-val-id').textContent,this)">Copy</button></div>
+          <div class="detail-value code-text" id="s-val-id">...</div>
+        </div>
+        <div class="grid-item full-width">
+          <div class="detail-label">Server Created</div>
+          <div class="detail-value" id="s-val-created">...</div>
+          <div class="detail-subtext" id="s-val-created-raw">...</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Online / Presence</div>
+          <div class="detail-value" id="s-val-online">-</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Channels (widget)</div>
+          <div class="detail-value" id="s-val-channels">-</div>
+        </div>
+      </div>
+      <div class="section-title">Snowflake Breakdown</div>
+      <div class="snowflake-details">
+        <div class="sf-item"><div class="sf-label">Timestamp</div><div class="sf-value" id="s-sf-ts">-</div></div>
+        <div class="sf-item"><div class="sf-label">Worker</div><div class="sf-value" id="s-sf-worker">-</div></div>
+        <div class="sf-item"><div class="sf-label">Process</div><div class="sf-value" id="s-sf-process">-</div></div>
+        <div class="sf-item"><div class="sf-label">Increment</div><div class="sf-value" id="s-sf-inc">-</div></div>
+        <div class="sf-item"><div class="sf-label">Unix ms</div><div class="sf-value" id="s-sf-unix">-</div></div>
+        <div class="sf-item"><div class="sf-label">Age (days)</div><div class="sf-value" id="s-sf-days">-</div></div>
+      </div>
+      <div class="section-title" style="margin-top:14px;color:#fa777c;font-weight:500;font-size:13px;text-transform:none;letter-spacing:normal;" id="s-error-msg"></div>
+      <div id="s-invite-preview" style="display:none;margin-top:10px;"></div>
+      <div class="json-panel" id="s-json"></div>
+    </div>
+  </div>
+
+  <!-- INVITE CARD -->
+  <div class="discord-profile" id="invite-card" style="display:none;">
+    <div class="discord-banner" id="i-banner" style="background-color:#5865F2;"></div>
+    <div class="discord-header-simple">
+      <div class="discord-avatar-container" style="border-radius:16px;">
+        <img class="discord-avatar-simple" id="i-icon" src="" style="border-radius:16px;">
+      </div>
+      <div class="discord-name-block">
+        <h1 class="discord-display-name" id="i-name">Loading Invite...</h1>
+        <h2 class="discord-username" id="i-code">code</h2>
+      </div>
+    </div>
+    <div class="discord-content">
+      <div class="section-title">Invite Details
+        <button class="copy-btn" onclick="exportJSON('invite')">Export JSON</button>
+      </div>
+      <div class="discord-details-grid">
+        <div class="grid-item">
+          <div class="detail-label">Invite Code</div>
+          <div class="detail-value code-text" id="i-val-code">...</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Guild ID</div>
+          <div class="detail-value code-text" id="i-val-guild">...</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Channel</div>
+          <div class="detail-value" id="i-val-channel">...</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Expires</div>
+          <div class="detail-value" id="i-val-expires">...</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Members (approx)</div>
+          <div class="detail-value" id="i-val-members">...</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Online (approx)</div>
+          <div class="detail-value" id="i-val-online">...</div>
+        </div>
+        <div class="grid-item full-width">
+          <div class="detail-label">Description</div>
+          <div class="detail-value" id="i-val-desc">...</div>
+        </div>
+      </div>
+      <div class="section-title" style="margin-top:14px;color:#fa777c;font-weight:500;font-size:13px;text-transform:none;letter-spacing:normal;" id="i-error-msg"></div>
+      <div class="json-panel" id="i-json"></div>
+    </div>
+  </div>
+
+  <!-- APP CARD -->
+  <div class="discord-profile" id="app-card" style="display:none;">
+    <div class="discord-banner" id="a-banner" style="background-color:#5865F2;"></div>
+    <div class="discord-header-simple">
+      <div class="discord-avatar-container" style="border-radius:16px;">
+        <img class="discord-avatar-simple" id="a-icon" src="" style="border-radius:16px;">
+      </div>
+      <div class="discord-name-block">
+        <h1 class="discord-display-name" id="a-name">Loading Application...</h1>
+        <div class="asset-badges" id="a-badges"></div>
+      </div>
+    </div>
+    <div class="discord-content">
+      <div class="section-title">Application Data
+        <button class="copy-btn" onclick="exportJSON('app')">Export JSON</button>
+      </div>
+      <div class="discord-details-grid">
+        <div class="grid-item">
+          <div class="detail-label">Application ID <button class="copy-btn" onclick="copyText(document.getElementById('a-val-id').textContent,this)">Copy</button></div>
+          <div class="detail-value code-text" id="a-val-id">...</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Bot Public</div>
+          <div class="detail-value" id="a-val-public">...</div>
+        </div>
+        <div class="grid-item full-width">
+          <div class="detail-label">Description</div>
+          <div class="detail-value" id="a-val-desc">...</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Guild ID</div>
+          <div class="detail-value code-text" id="a-val-guild">...</div>
+        </div>
+        <div class="grid-item">
+          <div class="detail-label">Created</div>
+          <div class="detail-value" id="a-val-created">...</div>
+        </div>
+      </div>
+      <div class="section-title" style="margin-top:14px;color:#fa777c;font-weight:500;font-size:13px;text-transform:none;letter-spacing:normal;" id="a-error-msg"></div>
+      <div class="json-panel" id="a-json"></div>
+    </div>
+  </div>
+
+  <div class="footer-note">APIs: japi.rest · Discord Official · Lanyard · CDN · Client-side only</div>
+</div>
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+  let currentMode = 'user';
+  let lastRawData = { user: null, server: null, invite: null, app: null, lanyard: null };
+  let currentAvatarHash = null;
+  let currentUserId = null;
+
+  function switchTab(mode) {
+    currentMode = mode;
+    ['user','server','invite','app'].forEach(m => {
+      document.getElementById('tab-' + m).classList.toggle('active', m === mode);
+      document.getElementById(m + '-card').style.display = 'none';
+    });
+    const placeholders = {
+      user: "Enter Discord User ID...",
+      server: "Enter Guild / Server ID...",
+      invite: "Enter Invite Code or discord.gg/ link...",
+      app: "Enter Application / Bot ID..."
+    };
+    document.getElementById('d-input').placeholder = placeholders[mode];
+  }
+
+  document.getElementById('d-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') performLookup();
+  });
+
+  (function() {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    const type = params.get('type') || 'user';
+    if (id) {
+      switchTab(type);
+      document.getElementById('d-input').value = id;
+      setTimeout(performLookup, 100);
+    }
+  })();
+
+  function getCreationData(snowflake) {
+    try {
+      const timestamp = Number((BigInt(snowflake) >> 22n) + 1420070400000n);
+      const date = new Date(timestamp);
+      const options = { month: 'long', day: 'numeric', year: 'numeric' };
+      const now = new Date();
+      let years = now.getFullYear() - date.getFullYear();
+      let months = now.getMonth() - date.getMonth();
+      if (months < 0) { years--; months += 12; }
+      return {
+        friendly: `${years} yrs ${months} mos ago (${date.toLocaleDateString('en-US', options)})`,
+        raw: date.toISOString()
+      };
+    } catch (e) {
+      return { friendly: "Invalid ID Format", raw: "N/A" };
+    }
+  }
+
+  function performLookup() {
+    if (currentMode === 'user') fetchUser();
+    else if (currentMode === 'server') fetchServer();
+    else if (currentMode === 'invite') fetchInvite();
+    else fetchApp();
+  }
+
+  function cleanId(raw) {
+    return raw.trim().replace(/[<@!>]/g, '').replace(/\s+/g, '');
+  }
+
+  async function fetchUser() {
+    const input = document.getElementById('d-input');
+    const button = document.getElementById('d-button');
+    const userId = cleanId(input.value);
+    if (!userId) return;
+    if (!/^\d{17,20}$/.test(userId)) {
+      showToast("Invalid User ID (17-20 digits)", true);
+      return;
+    }
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner"></span> Searching...';
+    document.getElementById('user-card').style.display = 'block';
+    document.getElementById('u-full-banner-container').style.display = 'none';
+    document.getElementById('u-bot-tag').style.display = 'none';
+    document.getElementById('u-global-name').textContent = "Loading...";
+    document.getElementById('u-username').textContent = "@loading";
+    document.getElementById('u-badges').innerHTML = '';
+    document.getElementById('u-json').style.display = 'none';
+    document.getElementById('u-presence').style.display = 'none';
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 9000);
+    try {
+      // Primary: japi.rest
+      const response = await fetch(`https://japi.rest/discord/v1/user/${userId}`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!response.ok) throw new Error("User Not Found");
+      const jsonData = await response.json();
+      if (!jsonData || !jsonData.data) throw new Error("Invalid Data");
+      const profile = jsonData.data;
+      lastRawData.user = profile;
+      currentUserId = userId;
+      currentAvatarHash = profile.avatar;
+
+      document.getElementById('u-global-name').textContent = profile.global_name || profile.username;
+      document.getElementById('u-val-discrim').textContent = profile.discriminator || "0";
+      document.getElementById('u-username').textContent = (profile.discriminator && profile.discriminator !== "0")
+        ? `${profile.username}#${profile.discriminator}` : `@${profile.username}`;
+      if (profile.bot) document.getElementById('u-bot-tag').style.display = 'flex';
+
+      const dates = getCreationData(userId);
+      document.getElementById('u-val-id').textContent = userId;
+      document.getElementById('u-val-created').textContent = dates.friendly;
+      document.getElementById('u-val-created-raw').textContent = dates.raw;
+
+      const size = document.getElementById('avatar-size').value;
+      const avatarUrl = profile.avatar
+        ? `https://cdn.discordapp.com/avatars/${userId}/${profile.avatar}.${profile.avatar.startsWith('a_') ? 'gif' : 'png'}?size=${size}`
+        : `https://cdn.discordapp.com/embed/avatars/${Number((BigInt(userId) >> 22n) % 6n)}.png`;
+      document.getElementById('u-avatar').src = avatarUrl;
+      const btnAvatar = document.getElementById('btn-dl-avatar');
+      btnAvatar.href = avatarUrl;
+      btnAvatar.classList.remove('disabled');
+
+      const bannerElem = document.getElementById('u-banner');
+      const btnBanner = document.getElementById('btn-dl-banner');
+      if (profile.banner) {
+        const ext = profile.banner.startsWith('a_') ? 'gif' : 'png';
+        const bannerUrl = `https://cdn.discordapp.com/banners/${userId}/${profile.banner}.${ext}?size=1024`;
+        bannerElem.style.backgroundImage = `url('${bannerUrl}')`;
+        bannerElem.style.backgroundColor = 'transparent';
+        document.getElementById('u-full-banner-container').style.display = 'block';
+        document.getElementById('u-full-banner-img').src = bannerUrl;
+        btnBanner.href = bannerUrl;
+        btnBanner.classList.remove('disabled');
+      } else {
+        bannerElem.style.backgroundImage = 'none';
+        bannerElem.style.backgroundColor = profile.banner_color || '#5c5eb0';
+        btnBanner.classList.add('disabled');
+      }
+
+      if (profile.avatar_decoration_data?.asset) {
+        document.getElementById('u-decoration').src = `https://cdn.discordapp.com/avatar-decoration-presets/${profile.avatar_decoration_data.asset}.png?size=96`;
+        document.getElementById('u-decoration').style.display = 'block';
+      } else {
+        document.getElementById('u-decoration').style.display = 'none';
+      }
+
+      document.getElementById('u-val-flags-raw').textContent = profile.public_flags || "0";
+      const nitroTypes = { 1: "Nitro Classic", 2: "Nitro Boost", 3: "Nitro Basic" };
+      document.getElementById('u-val-nitro').textContent = profile.premium_type ? nitroTypes[profile.premium_type] : "None";
+      if (profile.public_flags_array?.length) {
+        document.getElementById('u-val-flags').textContent = profile.public_flags_array
+          .map(f => f.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())).join(', ');
+      } else {
+        document.getElementById('u-val-flags').textContent = "None";
+      }
+
+      const badgesEl = document.getElementById('u-badges');
+      badgesEl.innerHTML = '';
+      if (profile.avatar) badgesEl.innerHTML += `<span class="badge-pill badge-green">✓ Avatar</span>`;
+      if (profile.banner) badgesEl.innerHTML += `<span class="badge-pill badge-purple">✓ Banner</span>`;
+      if (profile.avatar_decoration_data) badgesEl.innerHTML += `<span class="badge-pill badge-yellow">✨ Decoration</span>`;
+      if (profile.premium_type) badgesEl.innerHTML += `<span class="badge-pill badge-orange">💎 Nitro</span>`;
+      if (profile.bot) badgesEl.innerHTML += `<span class="badge-pill badge-blue">Bot</span>`;
+
+      if (profile.accent_color) {
+        const hex = '#' + Number(profile.accent_color).toString(16).padStart(6, '0');
+        document.getElementById('u-val-accent').innerHTML = `<span class="accent-swatch" style="background:${hex}"></span>${hex}`;
+      } else document.getElementById('u-val-accent').textContent = "None";
+      if (profile.banner_color) {
+        document.getElementById('u-val-banner-color').innerHTML = `<span class="accent-swatch" style="background:${profile.banner_color}"></span>${profile.banner_color}`;
+      } else document.getElementById('u-val-banner-color').textContent = "None";
+
+      const cdnBtn = document.getElementById('btn-open-cdn');
+      cdnBtn.href = avatarUrl;
+      cdnBtn.classList.remove('disabled');
+
+      fillSnowflake(userId, 'sf-');
+      addToHistory(userId, profile.global_name || profile.username, 'user');
+      updateShareUrl(userId, 'user');
+
+      // Secondary API: Lanyard presence (non-blocking)
+      fetchLanyard(userId);
+    } catch (error) {
+      document.getElementById('u-global-name').textContent = error.name === 'AbortError' ? "Request Timed Out" : "Error Loading User";
+      document.getElementById('u-username').textContent = error.message || "";
+      showToast(error.message || "Lookup failed", true);
+    } finally {
+      button.disabled = false;
+      button.textContent = "Look Up";
+    }
+  }
+
+  async function fetchLanyard(userId) {
+    try {
+      const res = await fetch(`https://api.lanyard.rest/v1/users/${userId}`);
+      if (!res.ok) return;
+      const json = await res.json();
+      if (!json.success || !json.data) return;
+      lastRawData.lanyard = json.data;
+      const d = json.data;
+
+      const box = document.getElementById('u-presence');
+      box.style.display = 'block';
+
+      const statusMap = {
+        online: { label: 'Online', cls: 'status-online' },
+        idle: { label: 'Idle', cls: 'status-idle' },
+        dnd: { label: 'Do Not Disturb', cls: 'status-dnd' },
+        offline: { label: 'Offline', cls: 'status-offline' }
+      };
+      const st = statusMap[d.discord_status] || statusMap.offline;
+      document.getElementById('u-presence-status').innerHTML =
+        `<span class="status-dot ${st.cls}"></span> ${st.label}` +
+        (d.active_on_discord_desktop ? ' · Desktop' : '') +
+        (d.active_on_discord_mobile ? ' · Mobile' : '') +
+        (d.active_on_discord_web ? ' · Web' : '');
+
+      const actEl = document.getElementById('u-activities');
+      actEl.innerHTML = '';
+      if (d.activities && d.activities.length) {
+        d.activities.forEach(a => {
+          const typeNames = ['Playing', 'Streaming', 'Listening to', 'Watching', 'Custom', 'Competing in'];
+          const type = typeNames[a.type] || 'Activity';
+          actEl.innerHTML += `<div class="activity-item">${type} <strong>${a.name}</strong>${a.details ? ' — ' + a.details : ''}${a.state ? ' · ' + a.state : ''}</div>`;
+        });
+      }
+
+      const spotEl = document.getElementById('u-spotify');
+      spotEl.innerHTML = '';
+      if (d.listening_to_spotify && d.spotify) {
+        const s = d.spotify;
+        spotEl.innerHTML = `
+          <div class="spotify-card">
+            <img src="${s.album_art_url}" alt="Album">
+            <div class="spotify-info">
+              <strong>${s.song}</strong>
+              <span>${s.artist}</span><br>
+              <span style="color:#1DB954;">Spotify</span>
+            </div>
+          </div>`;
+      }
+    } catch (e) {
+      // Lanyard is optional — silently ignore
+    }
+  }
+
+  function updateAvatarSize() {
+    if (!currentUserId || !currentAvatarHash) return;
+    const size = document.getElementById('avatar-size').value;
+    const ext = currentAvatarHash.startsWith('a_') ? 'gif' : 'png';
+    const url = `https://cdn.discordapp.com/avatars/${currentUserId}/${currentAvatarHash}.${ext}?size=${size}`;
+    document.getElementById('u-avatar').src = url;
+    document.getElementById('btn-dl-avatar').href = url;
+    document.getElementById('btn-open-cdn').href = url;
+  }
+
+  async function fetchServer() {
+    const input = document.getElementById('d-input');
+    const button = document.getElementById('d-button');
+    const guildId = cleanId(input.value);
+    if (!guildId) return;
+    if (!/^\d{17,20}$/.test(guildId)) {
+      showToast("Invalid Guild ID", true);
+      return;
+    }
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner"></span> Searching...';
+    document.getElementById('server-card').style.display = 'block';
+    document.getElementById('s-name').textContent = "Resolving Server...";
+    document.getElementById('s-error-msg').textContent = "";
+    document.getElementById('s-icon').src = "https://cdn.discordapp.com/embed/avatars/0.png";
+    document.getElementById('s-badges').innerHTML = "";
+    document.getElementById('s-val-online').textContent = "-";
+    document.getElementById('s-val-channels').textContent = "-";
+    document.getElementById('s-invite-preview').style.display = 'none';
+    document.getElementById('s-json').style.display = 'none';
+
+    const dates = getCreationData(guildId);
+    document.getElementById('s-val-id').textContent = guildId;
+    document.getElementById('s-val-created').textContent = dates.friendly;
+    document.getElementById('s-val-created-raw').textContent = dates.raw;
+    fillSnowflake(guildId, 's-sf-');
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+    try {
+      let widgetSuccess = false;
+      try {
+        const widgetRes = await fetch(`https://discord.com/api/guilds/${guildId}/widget.json`, { signal: controller.signal });
+        if (widgetRes.ok) {
+          const widgetData = await widgetRes.json();
+          lastRawData.server = widgetData;
+          document.getElementById('s-name').textContent = widgetData.name || "Unknown Server";
+          document.getElementById('s-error-msg').textContent = `✓ Public Widget · Online: ${widgetData.presence_count || 0}`;
+          document.getElementById('s-error-msg').style.color = "#57F287";
+          document.getElementById('s-val-online').textContent = widgetData.presence_count ?? "-";
+          document.getElementById('s-val-channels').textContent = (widgetData.channels || []).length;
+          if (widgetData.instant_invite) {
+            document.getElementById('s-invite-preview').style.display = 'block';
+            document.getElementById('s-invite-preview').innerHTML = `<a href="${widgetData.instant_invite}" target="_blank" class="media-btn" style="display:inline-flex;width:auto;padding:8px 14px;">Open Instant Invite →</a>`;
+          }
+          widgetSuccess = true;
+          addToHistory(guildId, widgetData.name || "Server", 'server');
+          updateShareUrl(guildId, 'server');
+        }
+      } catch (e) {}
+
+      if (!widgetSuccess) {
+        const response = await fetch(`https://japi.rest/discord/v1/guild/${guildId}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (!response.ok) throw new Error(`API ${response.status}`);
+        const jsonData = await response.json();
+        const guild = jsonData.data;
+        lastRawData.server = guild;
+        document.getElementById('s-name').textContent = guild.name || "Unknown Server";
+        if (guild.icon) {
+          document.getElementById('s-icon').src = `https://cdn.discordapp.com/icons/${guildId}/${guild.icon}.png?size=512`;
+        }
+        document.getElementById('s-error-msg').textContent = "✓ Data via JAPI";
+        document.getElementById('s-error-msg').style.color = "#57F287";
+        addToHistory(guildId, guild.name || "Server", 'server');
+        updateShareUrl(guildId, 'server');
+      }
+    } catch (err) {
+      clearTimeout(timeoutId);
+      document.getElementById('s-name').textContent = "Private / Unknown Server";
+      document.getElementById('s-error-msg').style.color = "#fa777c";
+      let reason = "Server is private or requires bot access.";
+      if (err.name === 'AbortError') reason = "Request timed out.";
+      else if (err.message === "Failed to fetch") reason = "CORS / network blocked (private server).";
+      document.getElementById('s-error-msg').textContent = `Note: ${reason} Showing ID-derived creation date only.`;
+      document.getElementById('s-icon').src = "https://cdn.discordapp.com/embed/avatars/0.png";
+    } finally {
+      button.disabled = false;
+      button.textContent = "Look Up";
+    }
+  }
+
+  async function fetchInvite() {
+    const input = document.getElementById('d-input');
+    const button = document.getElementById('d-button');
+    let code = input.value.trim();
+    if (!code) return;
+    const match = code.match(/(?:discord\.gg\/|discord\.com\/invite\/|discordapp\.com\/invite\/)([a-zA-Z0-9-]+)/i);
+    if (match) code = match[1];
+    code = code.replace(/[^a-zA-Z0-9-]/g, '');
+    if (!code) {
+      showToast("Invalid invite code", true);
+      return;
+    }
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner"></span> Searching...';
+    document.getElementById('invite-card').style.display = 'block';
+    document.getElementById('i-name').textContent = "Resolving Invite...";
+    document.getElementById('i-error-msg').textContent = "";
+    document.getElementById('i-icon').src = "https://cdn.discordapp.com/embed/avatars/0.png";
+    document.getElementById('i-code').textContent = code;
+    document.getElementById('i-val-code').textContent = code;
+    document.getElementById('i-json').style.display = 'none';
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    try {
+      const res = await fetch(`https://discord.com/api/v10/invites/${code}?with_counts=true&with_expiration=true`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(res.status === 404 ? "Invite not found or expired" : `API ${res.status}`);
+      const data = await res.json();
+      lastRawData.invite = data;
+      const guild = data.guild || {};
+      document.getElementById('i-name').textContent = guild.name || "Unknown Server";
+      document.getElementById('i-val-guild').textContent = guild.id || "-";
+      document.getElementById('i-val-channel').textContent = data.channel ? `#${data.channel.name}` : "-";
+      document.getElementById('i-val-expires').textContent = data.expires_at ? new Date(data.expires_at).toLocaleString() : "Never / Permanent";
+      document.getElementById('i-val-members').textContent = data.approximate_member_count ?? "-";
+      document.getElementById('i-val-online').textContent = data.approximate_presence_count ?? "-";
+      document.getElementById('i-val-desc').textContent = guild.description || "No description";
+      if (guild.icon) {
+        document.getElementById('i-icon').src = `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=512`;
+      }
+      if (guild.banner) {
+        const ext = guild.banner.startsWith('a_') ? 'gif' : 'png';
+        document.getElementById('i-banner').style.backgroundImage = `url('https://cdn.discordapp.com/banners/${guild.id}/${guild.banner}.${ext}?size=1024')`;
+      } else {
+        document.getElementById('i-banner').style.backgroundImage = 'none';
+        document.getElementById('i-banner').style.backgroundColor = '#5865F2';
+      }
+      document.getElementById('i-error-msg').textContent = "✓ Invite resolved";
+      document.getElementById('i-error-msg').style.color = "#57F287";
+      addToHistory(code, guild.name || code, 'invite');
+      updateShareUrl(code, 'invite');
+    } catch (err) {
+      clearTimeout(timeoutId);
+      document.getElementById('i-name').textContent = "Invalid or Expired Invite";
+      document.getElementById('i-error-msg').style.color = "#fa777c";
+      document.getElementById('i-error-msg').textContent = err.name === 'AbortError' ? "Timed out" : (err.message || "Failed");
+      showToast(err.message || "Invite lookup failed", true);
+    } finally {
+      button.disabled = false;
+      button.textContent = "Look Up";
+    }
+  }
+
+  async function fetchApp() {
+    const input = document.getElementById('d-input');
+    const button = document.getElementById('d-button');
+    const appId = cleanId(input.value);
+    if (!appId) return;
+    if (!/^\d{17,20}$/.test(appId)) {
+      showToast("Invalid Application ID", true);
+      return;
+    }
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner"></span> Searching...';
+    document.getElementById('app-card').style.display = 'block';
+    document.getElementById('a-name').textContent = "Resolving Application...";
+    document.getElementById('a-error-msg').textContent = "";
+    document.getElementById('a-icon').src = "https://cdn.discordapp.com/embed/avatars/0.png";
+    document.getElementById('a-badges').innerHTML = "";
+    document.getElementById('a-json').style.display = 'none';
+
+    const dates = getCreationData(appId);
+    document.getElementById('a-val-id').textContent = appId;
+    document.getElementById('a-val-created').textContent = dates.friendly;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    try {
+      const res = await fetch(`https://japi.rest/discord/v1/application/${appId}`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const json = await res.json();
+      const app = json.data?.application || json.data || json;
+      lastRawData.app = app;
+      document.getElementById('a-name').textContent = app.name || "Unknown Application";
+      document.getElementById('a-val-public').textContent = app.bot_public ? "Yes" : "No";
+      document.getElementById('a-val-desc').textContent = app.description || "No description";
+      document.getElementById('a-val-guild').textContent = app.guild_id || "-";
+      if (app.icon) {
+        document.getElementById('a-icon').src = `https://cdn.discordapp.com/app-icons/${appId}/${app.icon}.png?size=512`;
+      }
+      const badges = document.getElementById('a-badges');
+      if (app.bot_public) badges.innerHTML += `<span class="badge-pill badge-green">Public Bot</span>`;
+      if (app.bot_require_code_grant) badges.innerHTML += `<span class="badge-pill badge-orange">Requires Code Grant</span>`;
+      document.getElementById('a-error-msg').textContent = "✓ Application data loaded";
+      document.getElementById('a-error-msg').style.color = "#57F287";
+      addToHistory(appId, app.name || "App", 'app');
+      updateShareUrl(appId, 'app');
+    } catch (err) {
+      clearTimeout(timeoutId);
+      document.getElementById('a-name').textContent = "Application Not Found";
+      document.getElementById('a-error-msg').style.color = "#fa777c";
+      document.getElementById('a-error-msg').textContent = err.name === 'AbortError' ? "Timed out" : (err.message || "Failed");
+      showToast(err.message || "App lookup failed", true);
+    } finally {
+      button.disabled = false;
+      button.textContent = "Look Up";
+    }
+  }
+
+  function fillSnowflake(id, prefix) {
+    try {
+      const snow = BigInt(id);
+      const ts = Number((snow >> 22n) + 1420070400000n);
+      const worker = Number((snow >> 17n) & 0x1Fn);
+      const process = Number((snow >> 12n) & 0x1Fn);
+      const inc = Number(snow & 0xFFFn);
+      const days = Math.floor((Date.now() - ts) / 86400000);
+      document.getElementById(prefix + 'ts').textContent = new Date(ts).toISOString().slice(0, 19).replace('T', ' ');
+      document.getElementById(prefix + 'worker').textContent = worker;
+      document.getElementById(prefix + 'process').textContent = process;
+      document.getElementById(prefix + 'inc').textContent = inc;
+      document.getElementById(prefix + 'unix').textContent = ts;
+      document.getElementById(prefix + 'days').textContent = days;
+    } catch (e) {}
+  }
+
+  function copyText(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      if (btn) {
+        btn.classList.add('copied');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Copy'; }, 1400);
+      }
+      showToast("Copied to clipboard");
+    });
+  }
+
+  function exportJSON(type) {
+    const data = lastRawData[type];
+    if (!data) {
+      showToast("No data to export", true);
+      return;
+    }
+    const panel = document.getElementById(type === 'user' ? 'u-json' : type === 'server' ? 's-json' : type === 'invite' ? 'i-json' : 'a-json');
+    panel.style.display = 'block';
+    panel.textContent = JSON.stringify(data, null, 2);
+    navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+    showToast("JSON copied + shown");
+  }
+
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function addToHistory(id, label, type) {
+    let hist = JSON.parse(localStorage.getItem('dlookup_hist') || '[]');
+    hist = hist.filter(h => h.id !== id);
+    hist.unshift({ id, label: (label || id).substring(0, 16), type, ts: Date.now() });
+    hist = hist.slice(0, 10);
+    localStorage.setItem('dlookup_hist', JSON.stringify(hist));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const bar = document.getElementById('history-bar');
+    const hist = JSON.parse(localStorage.getItem('dlookup_hist') || '[]');
+    const icons = { user: '👤', server: '🏠', invite: '🔗', app: '🤖' };
+    bar.innerHTML = hist.map(h =>
+      `<span class="history-chip" onclick="loadHistory('${h.id}','${h.type}')">${icons[h.type]||''} ${h.label}</span>`
+    ).join('') + (hist.length ? `<button class="history-clear" onclick="clearHistory()">Clear</button>` : '');
+  }
+
+  function clearHistory() {
+    localStorage.removeItem('dlookup_hist');
+    renderHistory();
+  }
+
+  function loadHistory(id, type) {
+    switchTab(type);
+    document.getElementById('d-input').value = id;
+    performLookup();
+  }
+
+  function updateShareUrl(id, type) {
+    const url = new URL(location.href);
+    url.searchParams.set('id', id);
+    url.searchParams.set('type', type);
+    history.replaceState(null, '', url);
+  }
+
+  renderHistory();
+</script>
+</body>
+</html>
