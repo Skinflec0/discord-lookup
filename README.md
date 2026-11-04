@@ -2,8 +2,6 @@
 
 A single-page, client-side lookup tool for Discord users, servers, invites and applications. Paste an ID or invite and get the public profile data, creation date, snowflake breakdown and CDN asset links. No backend, no build step, one HTML file.
 
-**Live demo:** `https://<your-username>.github.io/<repo>/`
-
 <!-- Add a screenshot: ![Screenshot](screenshot.png) -->
 
 ## Features
