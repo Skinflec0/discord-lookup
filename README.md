@@ -1,4 +1,4 @@
-# Discord Ultimate Lookup
+# Discord Lookup
 
 A single-page, client-side lookup tool for Discord users, servers, invites and applications. Paste an ID or invite and get the public profile data, creation date, snowflake breakdown and CDN asset links. No backend, no build step, one HTML file.
 
