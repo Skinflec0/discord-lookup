@@ -79,7 +79,3 @@ Plain HTML, CSS and JavaScript with no dependencies or build tooling. Snowflake 
 ## Disclaimer
 
 Not affiliated with or endorsed by Discord Inc. Use the tool responsibly and respect people's privacy and the [Discord Terms of Service](https://discord.com/terms).
-
-## License
-
-MIT. See [LICENSE](LICENSE).
